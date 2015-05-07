@@ -20,28 +20,29 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html">
 <title>One World, One Dream</title>
-<style>
-#center{
-	margin:0px auto;
-	}
+<style type="text/css">
+.highlight{
+	color:red;
+	font-weight:600;
+}
 </style>
 </head>
 
 <body>
 <form method="get">
 <table align="center">
-<tr><td><input type="text" name="queryString"></td></tr>
+<tr><td><input type="text" name="queryString" style="width:400px;height:40px;font-size:30px"></td>
+	<td><input type="submit" style="width:150px;height:40px;font-size:30px" value="Search"></td></tr>
 </table>
 </form>
  <%
 	String queryString = request.getParameter("queryString");
  	if(queryString != null && !queryString.equals("")){
- 		System.out.println(queryString);
 	 	final String indexPath = "C:/Users/Gatsby/Documents/LuceneIndex";
 	 	final String[] fields = { "title", "content" };
-	 	IndexReader reader;
 		try {
-			reader = DirectoryReader.open(FSDirectory.open(Paths.get(indexPath)));
+			
+			IndexReader reader = DirectoryReader.open(FSDirectory.open(Paths.get(indexPath)));
 			IndexSearcher searcher = new IndexSearcher(reader);
 		 	Analyzer analyzer = new StandardAnalyzer();
 			MultiFieldQueryParser parser = new MultiFieldQueryParser(fields, analyzer);
@@ -49,10 +50,15 @@
 			TopDocs topDocs = searcher.search(query, 100);
 			ScoreDoc[] hits = topDocs.scoreDocs;
 			int hitNum = topDocs.totalHits < 100 ? topDocs.totalHits : 100;
+			String[] keys = queryString.split(" ");
 			for (int i = 0; i < hitNum; i++) {
 				Document doc = searcher.doc(hits[i].doc);
 				String title = doc.get("title");
 				String content = doc.get("content");
+				for(String s : keys){
+					title = title.replaceAll(s, "<span class = highlight>" + s + "</span>");
+					content = content.replaceAll(s, "<span class = highlight>" + s + "</span>");
+				}
 				out.println(title);
 				out.print("<p>" +content+ "</p>");
 				}
