@@ -1,3 +1,5 @@
+<%@page import="java.util.concurrent.Executors"%>
+<%@page import="java.util.concurrent.ExecutorService"%>
 <%@page import="org.apache.lucene.document.Document"%>
 <%@page import="org.apache.lucene.queryparser.classic.ParseException"%>
 <%@page import="java.io.IOException"%>
@@ -25,25 +27,29 @@
 	color:red;
 	font-weight:600;
 }
+#title{
+	font-size:large;
+}
 </style>
 </head>
 
 <body>
 <form method="get">
 <table align="center">
-<tr><td><input type="text" name="queryString" style="width:400px;height:40px;font-size:30px"></td>
-	<td><input type="submit" style="width:150px;height:40px;font-size:30px" value="Search"></td></tr>
+<tr><td><input type="text" name="queryString" style="width:300px;height:30px;font-size:25px"></td>
+	<td><input type="submit" style="width:150px;height:30px;font-size:25px" value="Search"></td></tr>
 </table>
 </form>
  <%
 	String queryString = request.getParameter("queryString");
  	if(queryString != null && !queryString.equals("")){
+ 		final int contentlen = 100;
 	 	final String indexPath = "C:/Users/Gatsby/Documents/LuceneIndex";
 	 	final String[] fields = { "title", "content" };
 		try {
-			
+			ExecutorService pool = Executors.newCachedThreadPool();
 			IndexReader reader = DirectoryReader.open(FSDirectory.open(Paths.get(indexPath)));
-			IndexSearcher searcher = new IndexSearcher(reader);
+			IndexSearcher searcher = new IndexSearcher(reader, pool);
 		 	Analyzer analyzer = new StandardAnalyzer();
 			MultiFieldQueryParser parser = new MultiFieldQueryParser(fields, analyzer);
 			Query query = parser.parse(queryString);
@@ -59,8 +65,12 @@
 					title = title.replaceAll(s, "<span class = highlight>" + s + "</span>");
 					content = content.replaceAll(s, "<span class = highlight>" + s + "</span>");
 				}
-				out.println(title);
-				out.print("<p>" +content+ "</p>");
+				if(content.length() > contentlen){
+					content = content.substring(0, contentlen);
+					content = content.concat("...");
+				}
+				out.println("<p> <div id=title>" +title+ "</div> <br>");
+				out.println( content+ "</p>");
 				}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
