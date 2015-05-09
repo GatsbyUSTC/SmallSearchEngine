@@ -47,6 +47,7 @@
 	 	final String indexPath = "C:/Users/Gatsby/Documents/LuceneIndex";
 	 	final String[] fields = { "title", "content" };
 		try {
+			long startt = System.currentTimeMillis();
 			ExecutorService pool = Executors.newCachedThreadPool();
 			IndexReader reader = DirectoryReader.open(FSDirectory.open(Paths.get(indexPath)));
 			IndexSearcher searcher = new IndexSearcher(reader, pool);
@@ -54,9 +55,11 @@
 			MultiFieldQueryParser parser = new MultiFieldQueryParser(fields, analyzer);
 			Query query = parser.parse(queryString);
 			TopDocs topDocs = searcher.search(query, 100);
+			long endt = System.currentTimeMillis();
 			ScoreDoc[] hits = topDocs.scoreDocs;
 			int hitNum = topDocs.totalHits < 100 ? topDocs.totalHits : 100;
 			String[] keys = queryString.split(" ");
+			out.println("<p> finding " +topDocs.totalHits+ " results in " +(endt-startt)+ " miliseconds </p>");
 			for (int i = 0; i < hitNum; i++) {
 				Document doc = searcher.doc(hits[i].doc);
 				String title = doc.get("title");
