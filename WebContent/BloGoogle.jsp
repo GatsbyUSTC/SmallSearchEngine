@@ -29,6 +29,8 @@
 }
 #title{
 	font-size:large;
+	color:blue;
+	text-decoration:underline;
 }
 </style>
 </head>
@@ -37,37 +39,46 @@
 <form method="get">
 <table align="center">
 <tr><td><input type="text" name="queryString" style="width:300px;height:30px;font-size:25px"></td>
-	<td><input type="submit" style="width:150px;height:30px;font-size:25px" value="Search"></td></tr>
+	<td><input type="submit" style="width:150px;height:30px;font-size:20px" value="Search"></td></tr>
 </table>
 </form>
  <%
 	String queryString = request.getParameter("queryString");
  	if(queryString != null && !queryString.equals("")){
- 		final int contentlen = 100;
+ 		final int contentlen = 300;
 	 	final String indexPath = "C:/Users/Gatsby/Documents/LuceneIndex";
 	 	final String[] fields = { "title", "content" };
 		try {
-			ExecutorService pool = Executors.newCachedThreadPool();
+			long startt = System.currentTimeMillis();
 			IndexReader reader = DirectoryReader.open(FSDirectory.open(Paths.get(indexPath)));
-			IndexSearcher searcher = new IndexSearcher(reader, pool);
+			IndexSearcher searcher = new IndexSearcher(reader);
 		 	Analyzer analyzer = new StandardAnalyzer();
 			MultiFieldQueryParser parser = new MultiFieldQueryParser(fields, analyzer);
 			Query query = parser.parse(queryString);
 			TopDocs topDocs = searcher.search(query, 100);
+			long endt = System.currentTimeMillis();
 			ScoreDoc[] hits = topDocs.scoreDocs;
 			int hitNum = topDocs.totalHits < 100 ? topDocs.totalHits : 100;
+			out.println("<p> finding " +topDocs.totalHits+ " results in " +(endt-startt)+ " miliseconds</p>");
 			String[] keys = queryString.split(" ");
 			for (int i = 0; i < hitNum; i++) {
 				Document doc = searcher.doc(hits[i].doc);
 				String title = doc.get("title");
 				String content = doc.get("content");
+				if(content.length() > contentlen){
+					int temp = content.length();
+					int before = contentlen/3;
+					int after = contentlen - before;
+					int loc = content.indexOf(keys[0]);
+					int start = loc > before ? (loc-before):0;
+					int end = (loc+after) > content.length() ? content.length():(loc+after);
+					content = content.substring(start, end);
+					content = start > 0 ? "...".concat(content) : content;
+					content = end < temp ? content.concat("..."):content;
+				}
 				for(String s : keys){
 					title = title.replaceAll(s, "<span class = highlight>" + s + "</span>");
 					content = content.replaceAll(s, "<span class = highlight>" + s + "</span>");
-				}
-				if(content.length() > contentlen){
-					content = content.substring(0, contentlen);
-					content = content.concat("...");
 				}
 				out.println("<p> <div id=title>" +title+ "</div> <br>");
 				out.println( content+ "</p>");
